@@ -4,9 +4,39 @@ server:
 spring:
   application:
     name: gateway-service
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      server:
+        webflux:
+          routes:
+            - id: auth
+              uri: lb://AUTH-SERVICE
+              predicates:
+                - Path=/api/v1/auth/**,/api/v1/admin/**
+            - id: places
+              uri: lb://PLACE-SERVICE
+              predicates:
+                - Path=/api/v1/places/**
+            - id: bookings
+              uri: lb://BOOKING-SERVICE
+              predicates:
+                - Path=/api/v1/bookings/**,/api/v1/availability/**
+          default-filters:
+            - PreserveHostHeader
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "*"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: false
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}

@@ -1,0 +1,39 @@
+services:
+  postgres-booking:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: booking_user
+      POSTGRES_PASSWORD: booking_pass
+      POSTGRES_DB: easemybooking_booking
+    ports: ["5433:5432"]
+    volumes: [booking_pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking_user -d easemybooking_booking"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  booking-service:
+    build: .
+    ports: ["8084:8084"]
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres-booking:5432/easemybooking_booking
+      DB_USERNAME: booking_user
+      DB_PASSWORD: booking_pass
+
+      # JWT (must match auth-service)
+      JWT_SECRET: ${JWT_SECRET:?set_in_.env}
+      JWT_ISSUER: ${JWT_ISSUER:-easemybooking-auth}
+
+      # PlaceClient config
+      PLACE_BASE_URL: http://host.docker.internal:8083
+      PLACE_PLACE_PATH: /places/{placeId}
+    depends_on:
+      postgres-booking:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  booking_pgdata:

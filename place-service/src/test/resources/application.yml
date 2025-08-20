@@ -1,0 +1,10 @@
+spring:
+  config:
+    import: ""  # IMPORTANT: keep this empty to avoid config server
+# If you prefer the 'optional' form instead, QUOTE it like this:
+#  config:
+#    import: "optional:configserver:"
+
+app:
+  security:
+    disabled: false

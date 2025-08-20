@@ -1,0 +1,30 @@
+services:
+  mongo-places:
+    image: mongo:7
+    #ports: ["27017:27017"]
+    volumes: [places_mongodata:/data/db]
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  place-service:
+    build: .
+    ports: ["8083:8083"]
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MONGO_URI: mongodb://mongo-places:27017/placesdb
+
+      # turn auth ON in container
+      SECURITY_DISABLED: "false"
+
+      # JWT validation (must match auth-service)
+      JWT_SECRET: ${JWT_SECRET:?set_in_.env}
+      JWT_ISSUER: ${JWT_ISSUER:-easemybooking-auth}
+    depends_on:
+      mongo-places:
+        condition: service_healthy
+
+volumes:
+  places_mongodata:
